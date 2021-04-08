@@ -64,8 +64,8 @@ def main(args):
         )
     elif args.dataset == "celeba":
         test_set = utils.ImageFolder(
-            args.data_path + '/test/',
-            transform=transforms.Compose([transforms.CenterCrop(148),
+            args.data_path+'/',  #  + '/test/',
+            transform=transforms.Compose([  # transforms.CenterCrop(148),
                                           transforms.Resize([64, 64]),
                                           transforms.ToTensor()]))
         test_loader = torch.utils.data.DataLoader(
@@ -268,6 +268,7 @@ def main(args):
     if not os.path.exists(path):
         os.makedirs(path)
     path += "/" + args.model_name
+    print('saving to', path)
     plt.savefig(path)
 
 

@@ -6,6 +6,7 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets, transforms
+from torch.utils.data import Subset
 import numpy as np
 import argparse
 from tqdm import tqdm
@@ -18,7 +19,7 @@ parser.add_argument('-n', type=int, help='latent dimension', default=128)
 parser.add_argument('-l', type=int, help='implicit layer', default=0)
 parser.add_argument('--gpu', action='store_true', help='Use GPU?')
 parser.add_argument('--train-size', type=int, default=50000)
-parser.add_argument('--valid-size', type=int, default=10000)
+parser.add_argument('--valid-size', type=int, default=100)
 parser.add_argument('--batch-size', type=int, default=32)
 parser.add_argument('--epochs', type=int, help='#epochs', default=100)
 parser.add_argument('--lr', type=float, default=0.0001)
@@ -59,16 +60,17 @@ def main(args):
             data_size=args.valid_size)
     elif args.dataset == "celeba":
         train_set = utils.ImageFolder(
-            args.data_path + '/train/',
-            transform=transforms.Compose([transforms.CenterCrop(148),
+            args.data_path+'/',  #  + '/train/',
+            transform=transforms.Compose([  # transforms.CenterCrop(148),
                                           transforms.Resize([64, 64]),
                                           transforms.ToTensor()]))
         valid_set = utils.ImageFolder(
-            args.data_path + '/val/',
-            transform=transforms.Compose([transforms.CenterCrop(148),
+            args.data_path+'/',  #  + '/val/',
+            transform=transforms.Compose([  # transforms.CenterCrop(148),
                                           transforms.Resize([64, 64]),
                                           transforms.ToTensor()]))
-
+        print(args.data_path, len(train_set), len(valid_set))
+        valid_set = Subset(valid_set, np.arange(min(args.valid_size, len(valid_set))))
     train_loader = torch.utils.data.DataLoader(
         train_set,
         num_workers=32,
@@ -188,33 +190,33 @@ def main(args):
 
         valid_loss = 0
 
-        for yi, _ in tqdm(valid_loader):
-            enc.eval()
-            dec.eval()
-
-            if args.l > 0:
-                mlp.eval()
-
-            yi = yi.to(device)
-            z_eval = enc(yi)
-
-            if args.vae:
-                mu = z_eval[:, :args.n]
-                logvar = z_eval[:, args.n:]
-                z_bar_eval = model.reparametrization(mu, logvar)
-            else:
-                if args.l > 0:
-                    z_bar_eval = mlp(z_eval)
-                else:
-                    z_bar_eval = z_eval
-            y_eval = dec(z_bar_eval)
-
-            eval_loss = F.mse_loss(y_eval, yi)
-            valid_loss += eval_loss.item()
-
-        valid_loss /= len(valid_loader)
-
-        print("epoch " + str(e) + '\tvalid loss = ' + str(valid_loss))
+#        for yi, _ in tqdm(valid_loader):
+#            enc.eval()
+#            dec.eval()
+#
+#            if args.l > 0:
+#                mlp.eval()
+#
+#            yi = yi.to(device)
+#            z_eval = enc(yi)
+#
+#            if args.vae:
+#                mu = z_eval[:, :args.n]
+#                logvar = z_eval[:, args.n:]
+#                z_bar_eval = model.reparametrization(mu, logvar)
+#            else:
+#                if args.l > 0:
+#                    z_bar_eval = mlp(z_eval)
+#                else:
+#                    z_bar_eval = z_eval
+#            y_eval = dec(z_bar_eval)
+#
+#            eval_loss = F.mse_loss(y_eval, yi)
+#            valid_loss += eval_loss.item()
+#
+#        valid_loss /= len(valid_loader)
+#
+#        print("epoch " + str(e) + '\tvalid loss = ' + str(valid_loss))
 
 
 if __name__ == '__main__':

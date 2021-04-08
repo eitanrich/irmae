@@ -10,7 +10,7 @@ from PIL import Image
 
 class ImageFolder(Dataset):
     def __init__(self, image_paths, transform=None):
-        self.image_paths = glob.glob(image_paths + "*")
+        self.image_paths = sorted(glob.glob(image_paths + "*.jpg"))
         self.transform = transform
 
     def __getitem__(self, index):
